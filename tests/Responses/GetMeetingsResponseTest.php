@@ -1,8 +1,8 @@
 <?php
 /**
- * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/.
+ * BigBlueButton open source conferencing system - https://www.bigbluebutton.org/.
  *
- * Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2016-2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -61,6 +61,10 @@ class GetMeetingsResponseTest extends TestCase
         $this->assertEquals(3, $aMeeting->getVideoCount());
         $this->assertEquals(2206, $aMeeting->getDuration());
         $this->assertEquals(true, $aMeeting->hasUserJoined());
+        $this->assertEquals(14, $aMeeting->getMaxUsers());
+        $this->assertEquals(1, $aMeeting->getModeratorCount());
+        $this->assertEquals('Consuelo Gleichner IV', $aMeeting->getMetas()['presenter']);
+        $this->assertEquals('http://www.muller.biz/autem-dolor-aut-nam-doloribus-molestiae', $aMeeting->getMetas()['endcallbackurl']);
     }
 
     public function testGetMeetingsResponseTypes()

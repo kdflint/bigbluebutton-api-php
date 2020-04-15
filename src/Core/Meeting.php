@@ -1,9 +1,9 @@
 <?php
 
 /**
- * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/.
+ * BigBlueButton open source conferencing system - https://www.bigbluebutton.org/.
  *
- * Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2016-2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  */
-
 namespace BigBlueButton\Core;
 
 /**
@@ -26,6 +25,12 @@ namespace BigBlueButton\Core;
  */
 class Meeting
 {
+
+    /**
+     * @var \SimpleXMLElement
+     */
+    protected $rawXml;
+
     /**
      * @var string
      */
@@ -37,7 +42,7 @@ class Meeting
     private $meetingName;
 
     /**
-     * @var int
+     * @var double
      */
     private $creationTime;
 
@@ -107,27 +112,74 @@ class Meeting
     private $hasUserJoined;
 
     /**
+     * @var string
+     */
+    private $internalMeetingId;
+
+    /**
+     * @var bool
+     */
+    private $isRecording;
+
+    /**
+     * @var double
+     */
+    private $startTime;
+
+    /**
+     * @var double
+     */
+    private $endTime;
+
+    /**
+     * @var int
+     */
+    private $maxUsers;
+
+    /**
+     * @var int
+     */
+    private $moderatorCount;
+
+    /**
+     * @var Attendee[]
+     */
+    private $attendees;
+
+    /**
+     * @var array
+     */
+    private $metas;
+
+    /**
      * Meeting constructor.
      * @param $xml \SimpleXMLElement
      */
     public function __construct($xml)
     {
+        $this->rawXml                = $xml;
         $this->meetingId             = $xml->meetingID->__toString();
         $this->meetingName           = $xml->meetingName->__toString();
-        $this->creationTime          = doubleval($xml->createTime);
+        $this->creationTime          = (float) $xml->createTime;
         $this->creationDate          = $xml->createDate->__toString();
-        $this->voiceBridge           = intval($xml->voiceBridge);
+        $this->voiceBridge           = (int) $xml->voiceBridge;
         $this->dialNumber            = $xml->dialNumber->__toString();
         $this->attendeePassword      = $xml->attendeePW->__toString();
         $this->moderatorPassword     = $xml->moderatorPW->__toString();
-        $this->hasBeenForciblyEnded  = $xml->hasBeenForciblyEnded->__toString() == 'true';
-        $this->isRunning             = $xml->running->__toString() == 'true';
-        $this->participantCount      = intval($xml->participantCount);
-        $this->listenerCount         = intval($xml->listenerCount);
-        $this->voiceParticipantCount = intval($xml->voiceParticipantCount);
-        $this->videoCount            = intval($xml->videoCount);
-        $this->duration              = intval($xml->duration);
-        $this->hasUserJoined         = $xml->hasUserJoined->__toString() == 'true';
+        $this->hasBeenForciblyEnded  = $xml->hasBeenForciblyEnded->__toString() === 'true';
+        $this->isRunning             = $xml->running->__toString() === 'true';
+        $this->participantCount      = (int) $xml->participantCount;
+        $this->listenerCount         = (int) $xml->listenerCount;
+        $this->voiceParticipantCount = (int) $xml->voiceParticipantCount;
+        $this->videoCount            = (int) $xml->videoCount;
+        $this->duration              = (int) $xml->duration;
+        $this->hasUserJoined         = $xml->hasUserJoined->__toString() === 'true';
+        $this->internalMeetingId     = $xml->internalMeetingID->__toString();
+        $this->isRecording           = $xml->recording->__toString() === 'true';
+        $this->startTime             = (float) $xml->startTime;
+        $this->endTime               = (float) $xml->endTime;
+        $this->maxUsers              = (int) $xml->maxUsers->__toString();
+        $this->moderatorCount        = (int) $xml->moderatorCount->__toString();
     }
 
     /**
@@ -256,5 +308,83 @@ class Meeting
     public function hasUserJoined()
     {
         return $this->hasUserJoined;
+    }
+
+    /**
+     * @return string
+     */
+    public function getInternalMeetingId()
+    {
+        return $this->internalMeetingId;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRecording()
+    {
+        return $this->isRecording;
+    }
+
+    /**
+     * @return double
+     */
+    public function getStartTime()
+    {
+        return $this->startTime;
+    }
+
+    /**
+     * @return double
+     */
+    public function getEndTime()
+    {
+        return $this->endTime;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaxUsers()
+    {
+        return $this->maxUsers;
+    }
+
+    /**
+     * @return int
+     */
+    public function getModeratorCount()
+    {
+        return $this->moderatorCount;
+    }
+
+    /**
+     * @return Attendee[]
+     */
+    public function getAttendees()
+    {
+        if ($this->attendees === null) {
+            $this->attendees = [];
+            foreach ($this->rawXml->attendees->attendee as $attendeeXml) {
+                $this->attendees[] = new Attendee($attendeeXml);
+            }
+        }
+
+        return $this->attendees;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMetas()
+    {
+        if ($this->metas === null) {
+            $this->metas = [];
+            foreach ($this->rawXml->metadata->children() as $metadataXml) {
+                $this->metas[$metadataXml->getName()] = $metadataXml->__toString();
+            }
+        }
+
+        return $this->metas;
     }
 }

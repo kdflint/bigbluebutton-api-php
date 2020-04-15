@@ -1,8 +1,8 @@
 <?php
 /**
- * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/.
+ * BigBlueButton open source conferencing system - https://www.bigbluebutton.org/.
  *
- * Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2016-2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -16,8 +16,16 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  */
-namespace BigBlueButton\Exceptions;
+namespace BigBlueButton\Parameters;
 
-class ChecksumException extends \Exception
+use BigBlueButton\TestCase;
+
+class HooksDestroyParametersTest extends TestCase
 {
+    public function testHooksDestroyParameters()
+    {
+        $hooksCreateParameters = new HooksDestroyParameters($hookId = $this->faker->numberBetween(1, 50));
+
+        $this->assertEquals($hookId, $hooksCreateParameters->getHookId());
+    }
 }

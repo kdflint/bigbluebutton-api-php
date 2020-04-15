@@ -1,8 +1,8 @@
 <?php
 /**
- * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/.
+ * BigBlueButton open source conferencing system - https://www.bigbluebutton.org/.
  *
- * Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2016-2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -24,6 +24,8 @@ use BigBlueButton\Parameters\DeleteRecordingsParameters;
 use BigBlueButton\Parameters\EndMeetingParameters;
 use BigBlueButton\Parameters\GetMeetingInfoParameters;
 use BigBlueButton\Parameters\GetRecordingsParameters;
+use BigBlueButton\Parameters\HooksCreateParameters;
+use BigBlueButton\Parameters\HooksDestroyParameters;
 use BigBlueButton\Parameters\IsMeetingRunningParameters;
 use BigBlueButton\Parameters\JoinMeetingParameters;
 use BigBlueButton\Parameters\PublishRecordingsParameters;
@@ -36,6 +38,9 @@ use BigBlueButton\Responses\GetDefaultConfigXMLResponse;
 use BigBlueButton\Responses\GetMeetingInfoResponse;
 use BigBlueButton\Responses\GetMeetingsResponse;
 use BigBlueButton\Responses\GetRecordingsResponse;
+use BigBlueButton\Responses\HooksCreateResponse;
+use BigBlueButton\Responses\HooksDestroyResponse;
+use BigBlueButton\Responses\HooksListResponse;
 use BigBlueButton\Responses\IsMeetingRunningResponse;
 use BigBlueButton\Responses\JoinMeetingResponse;
 use BigBlueButton\Responses\PublishRecordingsResponse;
@@ -50,15 +55,17 @@ use SimpleXMLElement;
  */
 class BigBlueButton
 {
-    protected $securitySalt;
+    protected $securitySecret;
     protected $bbbServerBaseUrl;
     protected $urlBuilder;
+    protected $jSessionId;
 
     public function __construct()
     {
-        $this->securitySalt     = getenv('BBB_SECURITY_SALT');
+        // Keeping backward compatibility with older deployed versions
+        $this->securitySecret   = (getenv('BBB_SECURITY_SALT') === false) ? getenv('BBB_SECRET') : $this->securitySecret = getenv('BBB_SECURITY_SALT');
         $this->bbbServerBaseUrl = getenv('BBB_SERVER_BASE_URL');
-        $this->urlBuilder       = new UrlBuilder($this->securitySalt, $this->bbbServerBaseUrl);
+        $this->urlBuilder       = new UrlBuilder($this->securitySecret, $this->bbbServerBaseUrl);
     }
 
     /**
@@ -77,6 +84,7 @@ class BigBlueButton
     /* The methods in the following section support the following categories of the BBB API:
     -- create
     -- getDefaultConfigXML
+    -- setConfigXML
     -- join
     -- end
     */
@@ -130,6 +138,7 @@ class BigBlueButton
     }
 
     /**
+     * @param  $setConfigXMLParams
      * @return SetConfigXMLResponse
      * @throws \RuntimeException
      */
@@ -347,6 +356,83 @@ class BigBlueButton
         return new UpdateRecordingsResponse($xml);
     }
 
+    /* ____________________ WEB HOOKS METHODS ___________________ */
+
+    /**
+     * @param $hookCreateParams HooksCreateParameters
+     * @return string
+     */
+    public function getHooksCreateUrl($hookCreateParams)
+    {
+        return $this->urlBuilder->buildUrl(ApiMethod::HOOKS_CREATE, $hookCreateParams->getHTTPQuery());
+    }
+
+    /**
+     * @param $hookCreateParams
+     * @return HooksCreateResponse
+     */
+    public function hooksCreate($hookCreateParams)
+    {
+        $xml = $this->processXmlResponse($this->getHooksCreateUrl($hookCreateParams));
+
+        return new HooksCreateResponse($xml);
+    }
+
+    /**
+     * @return string
+     */
+    public function getHooksListUrl()
+    {
+        return $this->urlBuilder->buildUrl(ApiMethod::HOOKS_LIST);
+    }
+
+    /**
+     * @return HooksListResponse
+     */
+    public function hooksList()
+    {
+        $xml = $this->processXmlResponse($this->getHooksListUrl());
+
+        return new HooksListResponse($xml);
+    }
+
+    /**
+     * @param $hooksDestroyParams HooksDestroyParameters
+     * @return string
+     */
+    public function getHooksDestroyUrl($hooksDestroyParams)
+    {
+        return $this->urlBuilder->buildUrl(ApiMethod::HOOKS_DESTROY, $hooksDestroyParams->getHTTPQuery());
+    }
+
+    /**
+     * @param $hooksDestroyParams
+     * @return HooksDestroyResponse
+     */
+    public function hooksDestroy($hooksDestroyParams)
+    {
+        $xml = $this->processXmlResponse($this->getHooksDestroyUrl($hooksDestroyParams));
+
+        return new HooksDestroyResponse($xml);
+    }
+
+    /* ____________________ SPECIAL METHODS ___________________ */
+    /**
+     * @return string
+     */
+    public function getJSessionId()
+    {
+        return $this->jSessionId;
+    }
+
+    /**
+     * @param string $jSessionId
+     */
+    public function setJSessionId($jSessionId)
+    {
+        $this->jSessionId = $jSessionId;
+    }
+
     /* ____________________ INTERNAL CLASS METHODS ___________________ */
 
     /**
@@ -354,6 +440,7 @@ class BigBlueButton
      *
      * @param  string            $url
      * @param  string            $payload
+     * @param  string            $contentType
      * @return SimpleXMLElement
      * @throws \RuntimeException
      */
@@ -365,19 +452,27 @@ class BigBlueButton
                 throw new \RuntimeException('Unhandled curl error: ' . curl_error($ch));
             }
             $timeout = 10;
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+            // Needed to store the JSESSIONID
+            $cookiefile     = tmpfile();
+            $cookiefilepath = stream_get_meta_data($cookiefile)['uri'];
+
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
             curl_setopt($ch, CURLOPT_ENCODING, 'UTF-8');
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-            if ($payload != '') {
+            curl_setopt($ch, CURLOPT_COOKIEFILE, $cookiefilepath);
+            curl_setopt($ch, CURLOPT_COOKIEJAR, $cookiefilepath);
+            if (!empty($payload)) {
                 curl_setopt($ch, CURLOPT_HEADER, 0);
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
                 curl_setopt($ch, CURLOPT_POST, 1);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
                     'Content-type: ' . $contentType,
-                    'Content-length: ' . strlen($payload),
+                    'Content-length: ' . mb_strlen($payload),
                 ]);
             }
             $data = curl_exec($ch);
@@ -386,19 +481,15 @@ class BigBlueButton
             }
             curl_close($ch);
 
+            $cookies = file_get_contents($cookiefilepath);
+            if (strpos($cookies, 'JSESSIONID') !== false) {
+                preg_match('/(?:JSESSIONID\s*)(?<JSESSIONID>.*)/', $cookies, $output_array);
+                $this->setJSessionId($output_array['JSESSIONID']);
+            }
+
             return new SimpleXMLElement($data);
-        }
-
-        if ($payload != '') {
+        } else {
             throw new \RuntimeException('Post XML data set but curl PHP module is not installed or not enabled.');
-        }
-
-        try {
-            $response = simplexml_load_file($url, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NOBLANKS);
-
-            return new SimpleXMLElement($response);
-        } catch (\RuntimeException $e) {
-            throw new \RuntimeException('Failover curl error: ' . $e->getMessage());
         }
     }
 }

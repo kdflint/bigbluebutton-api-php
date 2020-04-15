@@ -1,8 +1,8 @@
 <?php
 /**
- * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/.
+ * BigBlueButton open source conferencing system - https://www.bigbluebutton.org/.
  *
- * Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2016-2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -35,6 +35,22 @@ class CreateMeetingResponse extends BaseResponse
     /**
      * @return string
      */
+    public function getInternalMeetingId()
+    {
+        return $this->rawXml->internalMeetingID->__toString();
+    }
+
+    /**
+     * @return string
+     */
+    public function getParentMeetingId()
+    {
+        return $this->rawXml->parentMeetingID->__toString();
+    }
+
+    /**
+     * @return string
+     */
     public function getAttendeePassword()
     {
         return $this->rawXml->attendeePW->__toString();
@@ -55,7 +71,7 @@ class CreateMeetingResponse extends BaseResponse
      */
     public function getCreationTime()
     {
-        return doubleval($this->rawXml->createTime);
+        return (float) $this->rawXml->createTime;
     }
 
     /**
@@ -63,7 +79,7 @@ class CreateMeetingResponse extends BaseResponse
      */
     public function getVoiceBridge()
     {
-        return intval($this->rawXml->voiceBridge);
+        return (int) $this->rawXml->voiceBridge;
     }
 
     /**
@@ -89,7 +105,7 @@ class CreateMeetingResponse extends BaseResponse
      */
     public function hasUserJoined()
     {
-        return $this->rawXml->hasUserJoined->__toString() == 'true';
+        return $this->rawXml->hasUserJoined->__toString() === 'true';
     }
 
     /**
@@ -97,7 +113,7 @@ class CreateMeetingResponse extends BaseResponse
      */
     public function getDuration()
     {
-        return intval($this->rawXml->duration);
+        return (int) $this->rawXml->duration;
     }
 
     /**
@@ -105,22 +121,6 @@ class CreateMeetingResponse extends BaseResponse
      */
     public function hasBeenForciblyEnded()
     {
-        return $this->rawXml->hasBeenForciblyEnded->__toString() == 'true';
-    }
-
-    /**
-     * @return string
-     */
-    public function getMessageKey()
-    {
-        return $this->rawXml->messageKey->__toString();
-    }
-
-    /**
-     * @return string
-     */
-    public function getMessage()
-    {
-        return $this->rawXml->message->__toString();
+        return $this->rawXml->hasBeenForciblyEnded->__toString() === 'true';
     }
 }

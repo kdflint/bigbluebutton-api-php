@@ -1,8 +1,8 @@
 <?php
 /**
- * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/.
+ * BigBlueButton open source conferencing system - https://www.bigbluebutton.org/.
  *
- * Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2016-2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -56,6 +56,16 @@ class Attendee
     private $hasVideo;
 
     /**
+     * @var array
+     */
+    private $customData;
+
+    /**
+     * @var string
+     */
+    private $clientType;
+
+    /**
      * Attendee constructor.
      * @param $xml \SimpleXMLElement
      */
@@ -64,10 +74,15 @@ class Attendee
         $this->userId          = $xml->userID->__toString();
         $this->fullName        = $xml->fullName->__toString();
         $this->role            = $xml->role->__toString();
-        $this->isPresenter     = $xml->isPresenter->__toString() == 'true';
-        $this->isListeningOnly = $xml->isListeningOnly->__toString() == 'true';
-        $this->hasJoinedVoice  = $xml->hasJoinedVoice->__toString() == 'true';
-        $this->hasVideo        = $xml->hasVideo->__toString() == 'true';
+        $this->isPresenter     = $xml->isPresenter->__toString() === 'true';
+        $this->isListeningOnly = $xml->isListeningOnly->__toString() === 'true';
+        $this->hasJoinedVoice  = $xml->hasJoinedVoice->__toString() === 'true';
+        $this->hasVideo        = $xml->hasVideo->__toString() === 'true';
+        $this->clientType      = $xml->clientType->__toString();
+
+        foreach ($xml->customdata->children() as $data) {
+            $this->customData[$data->getName()] = $data->__toString();
+        }
     }
 
     /**
@@ -124,5 +139,21 @@ class Attendee
     public function hasVideo()
     {
         return $this->hasVideo;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClientType()
+    {
+        return $this->clientType;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCustomData()
+    {
+        return $this->customData;
     }
 }

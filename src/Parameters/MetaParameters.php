@@ -1,8 +1,8 @@
 <?php
 /**
- * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/.
+ * BigBlueButton open source conferencing system - https://www.bigbluebutton.org/.
  *
- * Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2016-2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -55,7 +55,11 @@ abstract class MetaParameters extends BaseParameters
     {
         if (count($this->meta) !== 0) {
             foreach ($this->meta as $k => $v) {
-                $queries['meta_' . $k] = $v;
+                if (!is_bool($v)) {
+                    $queries['meta_' . $k] = $v;
+                } else {
+                    $queries['meta_' . $k] = $v ? 'true' : 'false';
+                }
             }
         }
     }

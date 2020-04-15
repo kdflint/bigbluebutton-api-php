@@ -1,8 +1,8 @@
 <?php
 /**
- * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/.
+ * BigBlueButton open source conferencing system - https://www.bigbluebutton.org/.
  *
- * Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2016-2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -55,6 +55,7 @@ class GetRecordingsResponseTest extends TestCase
         $this->assertEquals('presentation', $aRecord->getPlaybackType());
         $this->assertEquals('http://test-install.blindsidenetworks.com/playback/presentation/0.9.0/playback.html?meetingId=f71d810b6e90a4a34ae02b8c7143e8733178578e-1462980100026', $aRecord->getPlaybackUrl());
         $this->assertEquals(86, $aRecord->getPlaybackLength());
+        $this->assertEquals(9, sizeof($aRecord->getMetas()));
     }
 
     public function testRecordMetadataContent()

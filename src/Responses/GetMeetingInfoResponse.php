@@ -1,8 +1,8 @@
 <?php
 /**
- * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/.
+ * BigBlueButton open source conferencing system - https://www.bigbluebutton.org/.
  *
- * Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2016-2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -18,8 +18,7 @@
  */
 namespace BigBlueButton\Responses;
 
-use BigBlueButton\Core\Attendee;
-use BigBlueButton\Core\MeetingInfo;
+use BigBlueButton\Core\Meeting;
 
 /**
  * Class GetMeetingInfoResponse
@@ -28,48 +27,19 @@ use BigBlueButton\Core\MeetingInfo;
 class GetMeetingInfoResponse extends BaseResponse
 {
     /**
-     * @var MeetingInfo
+     * @var Meeting
      */
-    private $meetingInfo;
+    private $meeting;
 
     /**
-     * @var Attendee[]
+     * @return Meeting
      */
-    private $attendees;
-
-    /**
-     * @var array
-     */
-    private $metadata;
-
-    /**
-     * @return MeetingInfo
-     */
-    public function getMeetingInfo()
+    public function getMeeting()
     {
-        if (!is_null($this->meetingInfo)) {
-            return $this->meetingInfo;
-        } else {
-            $this->meetingInfo = new MeetingInfo($this->rawXml);
+        if ($this->meeting === null) {
+            $this->meeting = new Meeting($this->rawXml);
         }
 
-        return $this->meetingInfo;
-    }
-
-    /**
-     * @return Attendee[]
-     */
-    public function getAttendees()
-    {
-        if (!is_null($this->attendees)) {
-            return $this->attendees;
-        } else {
-            $this->attendees = [];
-            foreach ($this->rawXml->attendees->attendee as $attendeeXml) {
-                $this->attendees[] = new Attendee($attendeeXml);
-            }
-        }
-
-        return $this->attendees;
+        return $this->meeting;
     }
 }

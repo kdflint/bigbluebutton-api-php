@@ -1,8 +1,8 @@
 <?php
 /**
- * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/.
+ * BigBlueButton open source conferencing system - https://www.bigbluebutton.org/.
  *
- * Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2016-2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -21,7 +21,7 @@ namespace BigBlueButton\Parameters;
 /**
  * Class JoinMeetingParametersTest.
  */
-class JoinMeetingParameters extends BaseParameters
+class JoinMeetingParameters extends UserDataParameters
 {
     /**
      * @var string
@@ -72,6 +72,11 @@ class JoinMeetingParameters extends BaseParameters
      * @var
      */
     private $clientURL;
+
+    /**
+     * @var boolean
+     */
+    private $joinViaHtml5;
 
     /**
      * JoinMeetingParametersTest constructor.
@@ -254,7 +259,7 @@ class JoinMeetingParameters extends BaseParameters
     }
 
     /**
-     * @param  mixed                 $redirect
+     * @param  boolean               $redirect
      * @return JoinMeetingParameters
      */
     public function setRedirect($redirect)
@@ -284,23 +289,44 @@ class JoinMeetingParameters extends BaseParameters
     }
 
     /**
+     * @return boolean
+     */
+    public function isJoinViaHtml5()
+    {
+        return $this->joinViaHtml5;
+    }
+
+    /**
+     * @param  boolean               $joinViaHtml5
+     * @return JoinMeetingParameters
+     */
+    public function setJoinViaHtml5($joinViaHtml5)
+    {
+        $this->joinViaHtml5 = $joinViaHtml5;
+
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getHTTPQuery()
     {
-        return $this->buildHTTPQuery(
-            [
-                'meetingID'    => $this->meetingId,
-                'fullName'     => $this->username,
-                'password'     => $this->password,
-                'userID'       => $this->userId,
-                'webVoiceConf' => $this->webVoiceConf,
-                'createTime'   => $this->creationTime,
-                'configToken'  => $this->configToken,
-                'avatarURL'    => $this->avatarURL,
-                'redirect'     => $this->redirect ? 'true' : 'false',
-                'clientURL'    => $this->clientURL
-            ]
-        );
+        $queries = [
+            'meetingID'    => $this->meetingId,
+            'fullName'     => $this->username,
+            'password'     => $this->password,
+            'userID'       => $this->userId,
+            'webVoiceConf' => $this->webVoiceConf,
+            'createTime'   => $this->creationTime,
+            'configToken'  => $this->configToken,
+            'avatarURL'    => $this->avatarURL,
+            'redirect'     => $this->redirect ? 'true' : 'false',
+            'joinViaHtml5' => $this->joinViaHtml5 ? 'true' : 'false',
+            'clientURL'    => $this->clientURL
+        ];
+        $this->buildUserData($queries);
+
+        return $this->buildHTTPQuery($queries);
     }
 }
